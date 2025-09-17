@@ -13,6 +13,7 @@ set RAM[1] -2;  // Set R1
 repeat 100 {
   ticktock;    // Run for 100 clock cycles
 }
-set RAM[1] -2,  // Restore arguments in case program used them
+set RAM[1] -2；  // Restore arguments in case program used them
 output;        // Output to file
+
 
