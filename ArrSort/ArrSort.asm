@@ -2,6 +2,14 @@
 // (R0, R1, R2 refer to RAM[0], RAM[1], and RAM[2], respectively.)
 
 // Put your code here.
+// -------------------------------------------------------------
+// ArrSort.asm – Selection Sort (ascending order)
+// Inputs : R1 = base address of array
+//          R2 = length of array
+// Output : array sorted in-place, R0 = -1 when finished
+// -------------------------------------------------------------
+
+    // ---- Handle arrays of length 0 or 1 ----
 @R2
 D=M
 @DONE
@@ -148,3 +156,4 @@ M=-1
 (END)
 @END
 0;JMP
+
