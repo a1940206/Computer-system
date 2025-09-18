@@ -9,151 +9,137 @@
 // Output : array sorted in-place, R0 = -1 when finished
 // -------------------------------------------------------------
 
-    // ---- Handle arrays of length 0 or 1 ----
+// ---- 处理数组长度为 0 或 1 的情况 ----
 @R2
 D=M
 @DONE
-D;JLE
+D;JLE          // 长度 <= 0
 D=D-1
 @DONE
-D;JLE
-@R3
-M=0
+D;JLE          // 长度 == 1
 
-(OUTER_CHECK)
-@R2
-D=M
-D=D-1
-@R3
-D=D-M
-@DONE
-D;JLE
-
-@R1
-D=M
-@R3
-D=D+M
-@R4
-M=D
-@R4
-A=M
-D=M
-@R7
-M=D
-@R4
-D=M
-@R5
-M=D
-@R4
-D=M
-D=D+1
-@R8
-M=D
-@R2
-D=M
-@R3
-D=D-M
-D=D-1
-@R6
+// i = 0
+@0
+D=A
+@i
 M=D
 
-(INNER_LOOP)
-@R6
-D=M
-@AFTER_INNER
-D;JEQ
-@R8
-A=M
-D=M
-@R9
-M=D
+(OUTER)
+    // if i >= R2-1 -> DONE
+    @i
+    D=M
+    @R2
+    D=D-M+1     // D = i-(R2-1)
+    @DONE
+    D;JGE
 
-@R9
-D=M
-@CURR_NONNEG
-D;JGE
-@R7
-D=M
-@BOTH_NEG
-D;JLT
-@UPDATE
-0;JMP
-(BOTH_NEG)
-@R9
-D=M
-@R7
-D=D-M
-@SKIP_UPDATE
-D;JGE
-@UPDATE
-0;JMP
-(CURR_NONNEG)
-@R7
-D=M
-@BOTH_NONNEG
-D;JGE
-@SKIP_UPDATE
-0;JMP
-(BOTH_NONNEG)
-@R9
-D=M
-@R7
-D=D-M
-@SKIP_UPDATE
-D;JGE
-@UPDATE
-0;JMP
+    // minIndex = i
+    @i
+    D=M
+    @minIndex
+    M=D
 
-(UPDATE)
-@R9
-D=M
-@R7
-M=D
-@R8
-D=M
-@R5
-M=D
-(SKIP_UPDATE)
-@R8
-M=M+1
-@R6
-M=M-1
-@INNER_LOOP
-0;JMP
+    // j = i+1
+    @i
+    D=M
+    D=D+1
+    @j
+    M=D
+
+(INNER)
+    // if j >= R2 -> 内层循环结束
+    @j
+    D=M
+    @R2
+    D=D-M
+    @AFTER_INNER
+    D;JGE
+
+    // if A[j] < A[minIndex] -> minIndex = j
+    @R1
+    D=M
+    @j
+    A=D+M
+    D=M
+    @tmp
+    M=D
+
+    @R1
+    D=M
+    @minIndex
+    A=D+M
+    D=M
+    @tmp
+    D=M-D
+    @NO_UPDATE
+    D;JGE         // A[j] >= A[minIndex] -> 不更新
+
+    @j
+    D=M
+    @minIndex
+    M=D
+(NO_UPDATE)
+    @j
+    M=M+1
+    @INNER
+    0;JMP
 
 (AFTER_INNER)
-@R5
-D=M
-@R4
-D=D-M
-@NO_SWAP
-D;JEQ
-@R4
-A=M
-D=M
-@R11
-M=D
-@R5
-A=M
-D=M
-@R4
-A=M
-M=D
-@R11
-D=M
-@R5
-A=M
-M=D
+    // swap A[i] 和 A[minIndex] 如果不同
+    @i
+    D=M
+    @minIndex
+    D=M-D
+    @NO_SWAP
+    D;JEQ
+
+    // tmp = A[i]
+    @R1
+    D=M
+    @i
+    A=D+M
+    D=M
+    @tmp
+    M=D
+
+    // A[i] = A[minIndex]
+    @R1
+    D=M
+    @minIndex
+    A=D+M
+    D=M
+    @R1
+    A=M
+    @i
+    A=A+M
+    M=D
+
+    // A[minIndex] = tmp
+    @tmp
+    D=M
+    @R1
+    A=M
+    @minIndex
+    A=A+M
+    M=D
 (NO_SWAP)
-@R3
-M=M+1
-@OUTER_CHECK
-0;JMP
+    @i
+    M=M+1
+    @OUTER
+    0;JMP
 
 (DONE)
-@R0
-M=-1
+    @R0
+    M=-1
+    @END
+    0;JMP
 (END)
-@END
-0;JMP
+    @END
+    0;JMP
+
+// -------- 变量区 --------
+(i)
+(minIndex)
+(j)
+(tmp)
 
