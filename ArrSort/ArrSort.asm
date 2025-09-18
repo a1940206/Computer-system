@@ -3,143 +3,123 @@
 
 // Put your code here.
 // -------------------------------------------------------------
-// ArrSort.asm – Selection Sort (ascending order)
+// ArrSort.asm – Bubble Sort (ascending order, in-place)
 // Inputs : R1 = base address of array
 //          R2 = length of array
 // Output : array sorted in-place, R0 = -1 when finished
 // -------------------------------------------------------------
 
-// ---- 处理数组长度为 0 或 1 的情况 ----
+// ---- Edge case: length <= 1 ----
 @R2
 D=M
 @DONE
-D;JLE          // 长度 <= 0
+D;JLE
 D=D-1
 @DONE
-D;JLE          // 长度 == 1
+D;JLE
 
-// i = 0
-@0
-D=A
-@i
+// pass = R2-1
+@R2
+D=M
+D=D-1
+@pass
 M=D
 
 (OUTER)
-    // if i >= R2-1 -> DONE
-    @i
+    // if pass < 1 -> DONE
+    @pass
     D=M
-    @R2
-    D=D-M+1     // D = i-(R2-1)
     @DONE
-    D;JGE
+    D;JLE
 
-    // minIndex = i
+    // i = 0
+    @0
+    D=A
     @i
-    D=M
-    @minIndex
-    M=D
-
-    // j = i+1
-    @i
-    D=M
-    D=D+1
-    @j
     M=D
 
 (INNER)
-    // if j >= R2 -> 内层循环结束
-    @j
+    // if i >= pass -> end inner loop
+    @i
     D=M
-    @R2
+    @pass
     D=D-M
     @AFTER_INNER
     D;JGE
 
-    // if A[j] < A[minIndex] -> minIndex = j
+    // ---- load A[i] into tmp ----
     @R1
     D=M
-    @j
-    A=D+M
+    @i
+    D=D+M
+    @addr
+    M=D           // addr = R1 + i
+
+    @addr
+    A=M
     D=M
     @tmp
-    M=D
+    M=D           // tmp = A[i]
 
-    @R1
+    // ---- load A[i+1] into tmp2 ----
+    @addr
     D=M
-    @minIndex
-    A=D+M
+    D=D+1
+    @addr2
+    M=D           // addr2 = addr + 1
+
+    @addr2
+    A=M
     D=M
+    @tmp2
+    M=D           // tmp2 = A[i+1]
+
+    // if tmp <= tmp2 -> no swap
     @tmp
-    D=M-D
-    @NO_UPDATE
-    D;JGE         // A[j] >= A[minIndex] -> 不更新
-
-    @j
     D=M
-    @minIndex
-    M=D
-(NO_UPDATE)
-    @j
+    @tmp2
+    D=D-M         // tmp - tmp2
+    @NO_SWAP
+    D;JLE
+
+    // ---- swap ----
+    @tmp2
+    D=M
+    @addr
+    A=M
+    M=D           // A[i] = tmp2
+
+    @tmp
+    D=M
+    @addr2
+    A=M
+    M=D           // A[i+1] = tmp
+(NO_SWAP)
+    @i
     M=M+1
     @INNER
     0;JMP
 
 (AFTER_INNER)
-    // swap A[i] 和 A[minIndex] 如果不同
-    @i
-    D=M
-    @minIndex
-    D=M-D
-    @NO_SWAP
-    D;JEQ
-
-    // tmp = A[i]
-    @R1
-    D=M
-    @i
-    A=D+M
-    D=M
-    @tmp
-    M=D
-
-    // A[i] = A[minIndex]
-    @R1
-    D=M
-    @minIndex
-    A=D+M
-    D=M
-    @R1
-    A=M
-    @i
-    A=A+M
-    M=D
-
-    // A[minIndex] = tmp
-    @tmp
-    D=M
-    @R1
-    A=M
-    @minIndex
-    A=A+M
-    M=D
-(NO_SWAP)
-    @i
-    M=M+1
+    @pass
+    M=M-1
     @OUTER
     0;JMP
 
 (DONE)
     @R0
-    M=-1
+    M=-1          // indicate completion
     @END
     0;JMP
 (END)
     @END
     0;JMP
 
-// -------- 变量区 --------
-(i)
-(minIndex)
-(j)
-(tmp)
+// -------- Variables --------
+(pass)    // 外层剩余趟数
+(i)       // 内层索引
+(tmp)     // A[i]
+(tmp2)    // A[i+1]
+(addr)    // R1 + i
+(addr2)   // R1 + i + 1
 
