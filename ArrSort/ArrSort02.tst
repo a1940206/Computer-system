@@ -1,19 +1,17 @@
 load ArrSort.asm,
 output-file ArrSort02.out,
 compare-to ArrSort02.cmp,
-output-list RAM[0]%D2.6.2 RAM[1]%D2.6.2 RAM[2]%D2.6.2 RAM[20]%D2.6.2 RAM[21]%D2.6.2 RAM[22]%D2.6.2 RAM[23]%D2.6.2;
+output-list RAM[0]%D2.6.2 RAM[1]%D2.6.2 RAM[2]%D2.6.2
+            RAM[30]%D2.6.2 RAM[31]%D2.6.2 RAM[32]%D2.6.2 RAM[33]%D2.6.2;
 
 set PC 0,
-set RAM[0]  0,  // Set R0
-set RAM[1]  20, // Set R1
-set RAM[2]  4,  // Set R2
-set RAM[20] 4,  // Set Arr[0]
-set RAM[21] 3,  // Set Arr[1]
-set RAM[22] 2,  // Set Arr[2]
-set RAM[23] 1;  // Set Arr[3]
-repeat 600 {
-  ticktock;    // Run for 600 clock cycles
-}
-set RAM[1] 20,  // Restore arguments in case program used them
+set RAM[1] 30,
 set RAM[2] 4,
-output;        // Output to file
+set RAM[30] -3,
+set RAM[31] 0,
+set RAM[32] 5,
+set RAM[33] -1;
+repeat 700 { ticktock; }
+set RAM[1] 30,
+set RAM[2] 4,
+output;
