@@ -37,13 +37,12 @@ class CompilerParser:
         self.next()
         return tok
 
-    # ---------- Program Structure ----------
+    # ---------- Program ----------
     def compileProgram(self):
         node = self.compileClass()
-        # ✅ Allow end-of-file cleanly (no extra tokens)
         if self.current() is not None:
-            raise ParseException("Extra tokens after program end")
-        return node
+            raise ParseException("Extra tokens after end of program")
+        return node  # ✅ 注意这里必须返回 node
 
     def compileClass(self):
         node = ParseTree("class", "")
@@ -187,7 +186,7 @@ class CompilerParser:
     def compileExpression(self):
         node = ParseTree("expression", "")
         node.addChild(self.compileTerm())
-        # ✅ handle binary operators (+, -, *, /, &, |, <, >, =)
+        # 支持运算符（+ - * / & | < > =）
         while self.have("symbol", "+") or self.have("symbol", "-") or \
               self.have("symbol", "*") or self.have("symbol", "/") or \
               self.have("symbol", "&") or self.have("symbol", "|") or \
@@ -199,12 +198,10 @@ class CompilerParser:
 
     def compileTerm(self):
         node = ParseTree("term", "")
-        if self.have("integerConstant", None):
-            node.addChild(self.mustBe("integerConstant", None))
-        elif self.have("stringConstant", None):
-            node.addChild(self.mustBe("stringConstant", None))
-        elif self.have("keyword", "skip"):
+        if self.have("keyword", "skip"):
             node.addChild(self.mustBe("keyword", "skip"))
+        elif self.have("integerConstant", None):
+            node.addChild(self.mustBe("integerConstant", None))
         elif self.have("identifier", None):
             node.addChild(self.mustBe("identifier", None))
         elif self.have("symbol", "("):
@@ -239,3 +236,4 @@ if __name__ == "__main__":
         print(result)
     except ParseException as e:
         print("Error Parsing:", e)
+
