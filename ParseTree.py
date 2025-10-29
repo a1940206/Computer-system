@@ -6,7 +6,10 @@ class ParseException(Exception):
     pass
 
 
-class ParseTree():
+class ParseTree:
+    """
+    A node in a Parse Tree data structure
+    """
 
     def __init__(self, node_type, value):
         """
@@ -17,23 +20,20 @@ class ParseTree():
         self.node_type = node_type
         self.value = value
         self.children = []
-    
 
-    def addChild(self,child):
+    def addChild(self, child):
         """
         Adds a ParseTree as a child of this ParseTree
         @param child The ParseTree to add
         """
         self.children.append(child)
-    
 
     def getChildren(self):
         """
         Get a list of child nodes in the order they were added.
-        @return A LinkedList of ParseTrees
+        @return A list of ParseTrees
         """
         return self.children
-    
 
     def getType(self):
         """
@@ -41,7 +41,6 @@ class ParseTree():
         @return The type of node (see element types).
         """
         return self.node_type
-    
 
     def getValue(self):
         """
@@ -49,39 +48,44 @@ class ParseTree():
         @return The node's value. Should only be used on terminal nodes/leaves, and empty otherwise.
         """
         return self.value
-    
 
-    def __str__(self,depth=0):
+    def __str__(self, depth=0):
         """
         Generate a string from this ParseTree
         @return A printable representation of this ParseTree with indentation
-        """        
-        # Set indentation
+        """
         indent = ""
-        for i in range(0,depth):
-            indent += "  \u2502 "
-        
-        # Generate output
+        for _ in range(depth):
+            indent += "  │ "
+
         output = ""
-        if(len(self.children)>0):
-            # Output if the node has children
-            output += self.node_type + "\n"
-            for child in children:
-                output += indent + "  \u2514 " + child.__str__(depth+1)
-            
-            output += indent + "\n"
-        else :
-            # Output if the node is a leaf/terminal
-            output += self.node_type + " " + self.value + "\n"
-        
+        if len(self.children) > 0:
+            # Non-terminal node
+            output += f"{self.node_type}\n"
+            for i, child in enumerate(self.children):
+                branch = "  └ " if i == len(self.children) - 1 else "  │ "
+                output += indent + branch + child.__str__(depth + 1)
+        else:
+            # Leaf node (terminal)
+            output += f"{self.node_type} {self.value}\n"
+
         return output
 
-    
 
 class Token(ParseTree):
-
     """
     Token for parsing. Can be used as a terminal node in a ParseTree
     """
     pass
-    
+
+
+# ✅ Simple test
+if __name__ == "__main__":
+    root = ParseTree("class", "")
+    root.addChild(Token("keyword", "class"))
+    root.addChild(Token("identifier", "Main"))
+    body = ParseTree("subroutine", "")
+    body.addChild(Token("keyword", "function"))
+    body.addChild(Token("identifier", "doSomething"))
+    root.addChild(body)
+    print(root)
