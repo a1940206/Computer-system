@@ -40,9 +40,11 @@ class CompilerParser:
     # ---------- Program ----------
     def compileProgram(self):
         node = self.compileClass()
+        # ✅ Allow end-of-file safely
         if self.current() is not None:
-            raise ParseException("Extra tokens after end of program")
-        return node  # ✅ 注意这里必须返回 node
+            if self.current().getValue() not in ("", None):
+                raise ParseException("Extra tokens after end of program")
+        return node
 
     def compileClass(self):
         node = ParseTree("class", "")
@@ -186,7 +188,7 @@ class CompilerParser:
     def compileExpression(self):
         node = ParseTree("expression", "")
         node.addChild(self.compileTerm())
-        # 支持运算符（+ - * / & | < > =）
+        # ✅ 支持所有二元操作符 (+ - * / & | < > =)
         while self.have("symbol", "+") or self.have("symbol", "-") or \
               self.have("symbol", "*") or self.have("symbol", "/") or \
               self.have("symbol", "&") or self.have("symbol", "|") or \
@@ -198,6 +200,7 @@ class CompilerParser:
 
     def compileTerm(self):
         node = ParseTree("term", "")
+        # ✅ 支持 skip, integerConstant, identifier, (expression)
         if self.have("keyword", "skip"):
             node.addChild(self.mustBe("keyword", "skip"))
         elif self.have("integerConstant", None):
@@ -236,4 +239,5 @@ if __name__ == "__main__":
         print(result)
     except ParseException as e:
         print("Error Parsing:", e)
+
 
