@@ -3,14 +3,10 @@ from ParseTree import *
 class CompilerParser:
 
     def __init__(self, tokens):
-        """
-        Constructor for the CompilerParser
-        @param tokens A list of tokens to be parsed
-        """
         self.tokens = tokens
         self.index = 0
 
-    # ---------------- Helper Methods ----------------
+    # ---------- Helper Methods ----------
     def next(self):
         if self.index < len(self.tokens) - 1:
             self.index += 1
@@ -41,25 +37,23 @@ class CompilerParser:
         self.next()
         return tok
 
-    # ---------------- Program Structure ----------------
+    # ---------- Program Structure ----------
     def compileProgram(self):
         node = self.compileClass()
+        # ✅ Allow end-of-file cleanly (no extra tokens)
         if self.current() is not None:
-            raise ParseException("Extra tokens after end of program")
+            raise ParseException("Extra tokens after program end")
         return node
 
     def compileClass(self):
-        """class → 'class' className '{' classVarDec* subroutine* '}'"""
         node = ParseTree("class", "")
         node.addChild(self.mustBe("keyword", "class"))
         node.addChild(self.mustBe("identifier", None))
         node.addChild(self.mustBe("symbol", "{"))
 
-        # classVarDec*
         while self.have("keyword", "static") or self.have("keyword", "field"):
             node.addChild(self.compileClassVarDec())
 
-        # subroutine*
         while self.have("keyword", "constructor") or self.have("keyword", "function") or self.have("keyword", "method"):
             node.addChild(self.compileSubroutine())
 
@@ -67,10 +61,9 @@ class CompilerParser:
         return node
 
     def compileClassVarDec(self):
-        """('static'|'field') type varName (',' varName)* ';'"""
         node = ParseTree("classVarDec", "")
-        node.addChild(self.mustBe("keyword", None))  # static or field
-        node.addChild(self.mustBe("keyword", None))  # type
+        node.addChild(self.mustBe("keyword", None))
+        node.addChild(self.mustBe("keyword", None))
         node.addChild(self.mustBe("identifier", None))
         while self.have("symbol", ","):
             node.addChild(self.mustBe("symbol", ","))
@@ -79,7 +72,6 @@ class CompilerParser:
         return node
 
     def compileSubroutine(self):
-        """('constructor'|'function'|'method') ('void'|type) subroutineName '(' parameterList ')' subroutineBody"""
         node = ParseTree("subroutine", "")
         node.addChild(self.mustBe("keyword", None))
         node.addChild(self.mustBe("keyword", None))
@@ -121,7 +113,7 @@ class CompilerParser:
         node.addChild(self.mustBe("symbol", ";"))
         return node
 
-    # ---------------- Statements ----------------
+    # ---------- Statements ----------
     def compileStatements(self):
         node = ParseTree("statements", "")
         while self.have("keyword", None):
@@ -179,7 +171,7 @@ class CompilerParser:
     def compileDo(self):
         node = ParseTree("doStatement", "")
         node.addChild(self.mustBe("keyword", "do"))
-        node.addChild(self.compileExpression())  # simplified
+        node.addChild(self.compileExpression())
         node.addChild(self.mustBe("symbol", ";"))
         return node
 
@@ -191,20 +183,34 @@ class CompilerParser:
         node.addChild(self.mustBe("symbol", ";"))
         return node
 
-    # ---------------- Expressions ----------------
+    # ---------- Expressions ----------
     def compileExpression(self):
         node = ParseTree("expression", "")
         node.addChild(self.compileTerm())
+        # ✅ handle binary operators (+, -, *, /, &, |, <, >, =)
+        while self.have("symbol", "+") or self.have("symbol", "-") or \
+              self.have("symbol", "*") or self.have("symbol", "/") or \
+              self.have("symbol", "&") or self.have("symbol", "|") or \
+              self.have("symbol", "<") or self.have("symbol", ">") or \
+              self.have("symbol", "="):
+            node.addChild(self.mustBe("symbol", None))
+            node.addChild(self.compileTerm())
         return node
 
     def compileTerm(self):
         node = ParseTree("term", "")
-        if self.have("keyword", "skip"):
-            node.addChild(self.mustBe("keyword", "skip"))
-        elif self.have("integerConstant", None):
+        if self.have("integerConstant", None):
             node.addChild(self.mustBe("integerConstant", None))
+        elif self.have("stringConstant", None):
+            node.addChild(self.mustBe("stringConstant", None))
+        elif self.have("keyword", "skip"):
+            node.addChild(self.mustBe("keyword", "skip"))
         elif self.have("identifier", None):
             node.addChild(self.mustBe("identifier", None))
+        elif self.have("symbol", "("):
+            node.addChild(self.mustBe("symbol", "("))
+            node.addChild(self.compileExpression())
+            node.addChild(self.mustBe("symbol", ")"))
         else:
             raise ParseException("Invalid term in expression")
         return node
@@ -219,19 +225,17 @@ class CompilerParser:
         return node
 
 
-# ------------------ Test ------------------
+# ---------- Test ----------
 if __name__ == "__main__":
     tokens = [
         Token("keyword", "class"),
-        Token("identifier", "MyClass"),
+        Token("identifier", "Main"),
         Token("symbol", "{"),
         Token("symbol", "}"),
     ]
-
     parser = CompilerParser(tokens)
     try:
         result = parser.compileProgram()
         print(result)
     except ParseException as e:
         print("Error Parsing:", e)
-
