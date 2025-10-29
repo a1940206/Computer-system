@@ -40,9 +40,10 @@ class CompilerParser:
     # ---------- Program ----------
     def compileProgram(self):
         node = self.compileClass()
-        # ✅ Allow end-of-file safely
+        # 防止额外 token
         if self.current() is not None:
-            if self.current().getValue() not in ("", None):
+            cur = self.current()
+            if cur.getValue() not in ("", None):
                 raise ParseException("Extra tokens after end of program")
         return node
 
@@ -188,7 +189,7 @@ class CompilerParser:
     def compileExpression(self):
         node = ParseTree("expression", "")
         node.addChild(self.compileTerm())
-        # ✅ 支持所有二元操作符 (+ - * / & | < > =)
+        # 支持二元运算符 (+ - * / & | < > =)
         while self.have("symbol", "+") or self.have("symbol", "-") or \
               self.have("symbol", "*") or self.have("symbol", "/") or \
               self.have("symbol", "&") or self.have("symbol", "|") or \
@@ -200,17 +201,39 @@ class CompilerParser:
 
     def compileTerm(self):
         node = ParseTree("term", "")
-        # ✅ 支持 skip, integerConstant, identifier, (expression)
-        if self.have("keyword", "skip"):
-            node.addChild(self.mustBe("keyword", "skip"))
-        elif self.have("integerConstant", None):
+        if self.have("integerConstant", None):
             node.addChild(self.mustBe("integerConstant", None))
-        elif self.have("identifier", None):
-            node.addChild(self.mustBe("identifier", None))
+        elif self.have("stringConstant", None):
+            node.addChild(self.mustBe("stringConstant", None))
+        elif self.have("keyword", None):
+            val = self.current().getValue()
+            if val in ("true", "false", "null", "this", "skip"):
+                node.addChild(self.mustBe("keyword", val))
+            else:
+                raise ParseException("Unexpected keyword in term")
+        elif self.have("symbol", "-") or self.have("symbol", "~"):
+            node.addChild(self.mustBe("symbol", None))
+            node.addChild(self.compileTerm())
         elif self.have("symbol", "("):
             node.addChild(self.mustBe("symbol", "("))
             node.addChild(self.compileExpression())
             node.addChild(self.mustBe("symbol", ")"))
+        elif self.have("identifier", None):
+            node.addChild(self.mustBe("identifier", None))
+            if self.have("symbol", "["):
+                node.addChild(self.mustBe("symbol", "["))
+                node.addChild(self.compileExpression())
+                node.addChild(self.mustBe("symbol", "]"))
+            elif self.have("symbol", "("):
+                node.addChild(self.mustBe("symbol", "("))
+                node.addChild(self.compileExpressionList())
+                node.addChild(self.mustBe("symbol", ")"))
+            elif self.have("symbol", "."):
+                node.addChild(self.mustBe("symbol", "."))
+                node.addChild(self.mustBe("identifier", None))
+                node.addChild(self.mustBe("symbol", "("))
+                node.addChild(self.compileExpressionList())
+                node.addChild(self.mustBe("symbol", ")"))
         else:
             raise ParseException("Invalid term in expression")
         return node
@@ -231,6 +254,11 @@ if __name__ == "__main__":
         Token("keyword", "class"),
         Token("identifier", "Main"),
         Token("symbol", "{"),
+        Token("keyword", "let"),
+        Token("identifier", "x"),
+        Token("symbol", "="),
+        Token("integerConstant", "5"),
+        Token("symbol", ";"),
         Token("symbol", "}"),
     ]
     parser = CompilerParser(tokens)
@@ -239,5 +267,6 @@ if __name__ == "__main__":
         print(result)
     except ParseException as e:
         print("Error Parsing:", e)
+
 
 
